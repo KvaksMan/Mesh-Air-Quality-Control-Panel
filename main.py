@@ -1,4 +1,4 @@
-from Constants import __DELAY_WINDOW_AUTOMATION
+__DELAY_WINDOW_AUTOMATION : int = 5 * 60
 
 from Database import Database, Device, Record, CO2Level
 db : Database = Database()

@@ -1,4 +1,4 @@
-from Constants import __DELAY_DATABASE_UPDATE
+__DELAY_DATABASE_UPDATE : int = 300
 
 import logging
 import os
@@ -147,38 +147,36 @@ class Database:
         return self.SessionLocal()
     
     def fetch_devices(self) -> list:
-        # url  : str  = "https://co2.mesh.lv/api/device/list"
-        # data : dict = {"buildingId": "640", "captchaToken": None}
-        # self.logger.info(f"Sending request to {url} with data: {data}")
-        # response : requests.Response = requests.post(url, json=data)
+        url  : str  = "https://co2.mesh.lv/api/device/list"
+        data : dict = {"buildingId": "640", "captchaToken": None}
+        self.logger.info(f"Sending request to {url} with data: {data}")
+        response : requests.Response = requests.post(url, json=data)
         
-        # if response.status_code == 200:
-        #     devices : dict = response.json()
-        #     self.logger.info(f"Received {len(devices)} devices.")
-        #     with self.get_session() as session:
-        #         for device in devices:
-        #             self.save_device(session, device)
-        # else:
-        #     self.logger.error(f"Error while fetching devices: {response.status_code}")
-        #     return []
-        pass
-    
+        if response.status_code == 200:
+            devices : dict = response.json()
+            self.logger.info(f"Received {len(devices)} devices.")
+            with self.get_session() as session:
+                for device in devices:
+                    self.save_device(session, device)
+        else:
+            self.logger.error(f"Error while fetching devices: {response.status_code}")
+            return []
+
     def fetch_device_data(self, device_id) -> dict:
-        # url  : str  = "https://co2.mesh.lv/api/device/chart/"
-        # data : dict = {"deviceId": device_id, "week": 1, "captchaToken": "-1"}
-        # self.logger.info(f"Sending request to {url} for device {device_id} with data: {data}")
-        # response : requests.Response = requests.post(url, json=data)
+        url  : str  = "https://co2.mesh.lv/api/device/chart/"
+        data : dict = {"deviceId": device_id, "week": 1, "captchaToken": "-1"}
+        self.logger.info(f"Sending request to {url} for device {device_id} with data: {data}")
+        response : requests.Response = requests.post(url, json=data)
         
-        # if response.status_code == 200:
-        #     device_data : dict = response.json()
-        #     self.logger.info(f"Received data for device {device_id}.")
-        #     with self.get_session() as session:
-        #         self.save_records(session, device_data)
-        # else:
-        #     self.logger.error(f"Error while fetching data for device {device_id}: {response.status_code}")
-        #     return {}
-        pass
-    
+        if response.status_code == 200:
+            device_data : dict = response.json()
+            self.logger.info(f"Received data for device {device_id}.")
+            with self.get_session() as session:
+                self.save_records(session, device_data)
+        else:
+            self.logger.error(f"Error while fetching data for device {device_id}: {response.status_code}")
+            return {}
+
     def save_co2_levels(self, session : Session, co2_levels : list[dict]) -> None:
         for co2_level in co2_levels:
             existing_co2_level : object = session.query(CO2Level).filter(CO2Level.id_co2_level == co2_level['id']).first()
@@ -310,6 +308,7 @@ class Database:
             session.commit()
     
     def get_all_devices(self) -> list[Device]:
+        global __DELAY_DATABASE_UPDATE
         with self.get_session() as session:
             lastUpdate = session.query(Device).first().last_updated
             if (datetime.utcnow() - lastUpdate).total_seconds() > __DELAY_DATABASE_UPDATE:
@@ -326,6 +325,7 @@ class Database:
             return device
 
     def get_records_by_device(self, device_id : int) -> Record:
+        global __DELAY_DATABASE_UPDATE
         with self.get_session() as session:
             records : list = session.query(Record).filter(Record.id_device == device_id).order_by(Record.timestamp).all()            
             if len(records) == 0 or (datetime.utcnow() - records[-1].last_updated).total_seconds() > __DELAY_DATABASE_UPDATE:
