@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Air Quality Control Panel</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="{{ url_for('static', filename='js/get_devices.js') }}"></script>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Mesh Air Quality Control Panel</h1>
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}" class="bold">Home</a>
+            <a href="{{ url_for('settings') }}">Settings</a>
+        </div>
+    </header>
+
+    <table id="table_devices" class="center_text">
+        <tr>
+            <th>Device ID</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>CO2</th>
+            <th>Last updated</th>
+            <th>Window</th>
+        </tr>
+    </table>
+
+    <script>
+        get_devices();
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Air Quality Control Panel Settings</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Mesh Air Quality Control Panel</h1>
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('settings') }}" class="bold">Settings</a>
+        </div>
+    </header>
+    
+    <div class="settings_wrapper">
+        <div>
+            <form action="{{ url_for('settings_set_co2levels')}}" method="post">
+                <table>
+                    <tr>
+                        <th colspan="2">CO2 Level starting value</th>
+                    </tr>
+
+                    {% for co2level in co2levels %}
+                        <tr>
+                            <th class="right_text" style="color: {{ co2level['color'] }}">{{ co2level['name'] }}</th>
+                            <td><input type="number" id="co2_{{ co2level['id_co2_level'] }}" name="{{ co2level['id_co2_level'] }}" value="{{ co2level['from_value'] }}" required></td>
+                        </tr>
+                    {% endfor %}
+
+                    <tr>
+                        <td colspan="2">
+                            <input type="submit" value="Save">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <div>
+            <form action="{{ url_for('settings_set_automatic_window_opening')}}" method="post">
+                <table>
+                    <tr>
+                        <th colspan="2">Automatic window opening</th>
+                    </tr>
+                    <tr>
+                        <th class="right_text">Enable</th>
+                        <td><input type="checkbox" id="automatic_window_opening_status" name="automatic_window_opening_status" {{ "checked" if automatic_window_opening_data.status else "" }}></td>
+                    </tr>
+                    <tr>
+                        <th class="right_text">Open on</th>
+                        <td>
+                            <select id="automatic_window_opening_open_on_co2_level" name="automatic_window_opening_open_on_co2_level">
+                                {% for co2level in co2levels %}
+                                    <script>
+                                        console.log("automatic_window_opening_data.status: {{ automatic_window_opening_data.status}}");
+                                        console.log("automatic_window_opening_data.on_co2_level: {{ automatic_window_opening_data.on_co2_level}}");
+                                        console.log("co2level['id_co2_level']: {{ co2level["id_co2_level"] }}");
+                                        console.log("automatic_window_opening_data.on_co2_level == co2level['id_co2_level']: {{ automatic_window_opening_data.on_co2_level == co2level["id_co2_level"] }}");
+                                    </script>
+                                    <option value="{{ co2level['id_co2_level'] }}" {{ "selected" if automatic_window_opening_data.on_co2_level == co2level["id_co2_level"] else "" }}>{{ co2level['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="submit" value="Save">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Air Quality Control Panel Settings</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/device.css') }}">
+    
+    <script src="{{ url_for('static', filename='js/device.js') }}"></script>
+
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Mesh Air Quality Control Panel</h1>
+            <!-- <h2>Device ID{{ device['id_device'] }}</h2> -->
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('settings') }}" class="bold">Settings</a>
+        </div>
+    </header>
+    
+    <table class="center_text">
+        <tr>
+            <th>Device ID</th>
+            <th>Device location</th>
+            <th>Device status</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>CO2</th>
+            <th>Last updated</th>
+        </tr>
+        <tr>
+            <td>{{ device['id_device'] }}</td>
+            <td>{{ device['id_room_group_name'] }}</td>
+            <td style="color: {{ 'green' if device['online'] else 'red' }}">{{ 'Online' if device['online'] else 'Offline' }}</td>
+            <td>{{ device['temperature'] }}</td>
+            <td>{{ device['humidity'] }}</td>
+            <td>{{ device['co2'] }}</td>
+            <td>{{ device['last_updated'] }}</td>
+        </tr>
+    </table>
+
+    <div id="chart_update_status"></div>
+
+    <section id="section_chart" style="display: none;">
+        <label for="date_range">Select Date Range:</label>
+        <input type="text" id="date_range" placeholder="Select Date Range">
+
+        <div id="chart_container"></div>
+    </section>
+
+    <section>
+        <h1>Window opening history</h1>
+        <table id="window_opening_history">
+            <tr>
+                <th>Opened at</th>
+                <th>Closed at</th>
+                <th>Duration</th>
+            </tr>
+        </table>
+    </section>
+
+    <script>
+        update_chart({{ device.id_device }});
+        update_window_opening_history({{ device.id_device }});
+    </script>
+</body>
+</html>

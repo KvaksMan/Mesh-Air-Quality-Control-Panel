@@ -1,0 +1,76 @@
+html {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    padding: 0;
+    margin: auto;
+    width: 80%;
+    max-width: calc(1920px * 0.8);
+    margin-bottom: 10vh;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header>div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+}
+
+
+.center_items {
+    display: flex;
+    justify-content: center;
+}
+
+.center_text,
+.center_text > tbody > tr > * {
+    text-align: center;
+}
+
+.right_text {
+    text-align: right;
+}
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: -webkit-fill-available;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+table td:has(img) {
+    display: flex;
+    justify-content: center;
+}
+
+table td>input, table td>select {
+    width: -webkit-fill-available;
+}
+
+.table-wrapper-x-scroll {
+    width: -webkit-fill-available;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.bold {
+    font-weight: bold;
+}

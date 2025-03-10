@@ -1,0 +1,23 @@
+#chart-container {
+    width: 80%;
+    height: 500px;
+    margin: auto;
+}
+
+.axis path, .axis line {
+    fill: none;
+    shape-rendering: crispEdges;
+}
+
+.line {
+    fill: none;
+    stroke-width: 2px;
+}
+
+.line.dotted {
+    stroke-dasharray: 5, 5;
+}
+
+#section_chart {
+    padding-top: 20px;
+}
