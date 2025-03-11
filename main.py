@@ -21,20 +21,32 @@ def window_automation() -> None:
     while True:
         sleep(DELAY_WINDOW_AUTOMATION)
         automatic_window_opening_data = {
-            'status'       : db.get_setting_value('automatic_window_opening_status'),
-            'on_co2_level' : db.get_setting_value('automatic_window_opening_open_on_co2_level')
+            'status_co2'    : db.get_setting_value('automatic_window_opening_status_by_co2'),
+            'on_co2_level'  : db.get_setting_value('automatic_window_opening_open_on_co2_level'),
+            'status_temp'   : db.get_setting_value('automatic_window_opening_status_by_temp'),
+            'on_temp_level' : db.get_setting_value('automatic_window_opening_open_on_temp_level')
         }
-        if not automatic_window_opening_data['status']:
+        if not (automatic_window_opening_data['status_co2'] or automatic_window_opening_data['status_temp']):
             continue
-        devices  : list[Device] = db.get_all_devices()
-        co2level : WarningLevel     = db.get_warning_level_by_id(automatic_window_opening_data['on_co2_level'])
+        
+        devices   : list[Device] = db.get_all_devices()
+        co2level  : WarningLevel = db.get_warning_level_by_id(automatic_window_opening_data['on_co2_level'])
+        templevel : WarningLevel = db.get_warning_level_by_id(automatic_window_opening_data['on_temp_level'])
+        
+        func = None
+        if automatic_window_opening_data['status_co2'] and automatic_window_opening_data['status_temp']:
+            func = lambda device: co2level.from_value <= device.co2 or templevel.from_value <= device.temperature
+        elif automatic_window_opening_data['status_co2']:
+            func = lambda device: co2level.from_value <= device.co2
+        elif automatic_window_opening_data['status_temp']:
+            func = lambda device: templevel.from_value <= device.temperature
         
         for device in devices:
             dwo : DeviceController.Device = DeviceController.DeviceWindowOpener(
                     device=device,
                     db=db
                 )
-            dwo.state = co2level.from_value <= device.co2
+            dwo.state = func(device)
 
 thread_window_automation = threading.Thread(target=window_automation)
 thread_window_automation.start()
@@ -50,32 +62,48 @@ def index():
 
 @app.route('/settings')
 def settings():
-    co2levels = [co2_level.to_dict() for co2_level in db.get_co2_levels()]
+    co2levels  = [co2_level.to_dict() for co2_level in db.get_co2_levels()]
+    templevels = [templevel.to_dict() for templevel in db.get_temperature_levels()]
+    print('co2levels', co2levels)
+    #                                            co2levels = [co2_level.to_dict() for co2_level in db.get_co2_levels()]
     automatic_window_opening_data = {
-        'status'       : db.get_setting_value('automatic_window_opening_status'),
-        'on_co2_level' : db.get_setting_value('automatic_window_opening_open_on_co2_level')
+        'status_co2'    : db.get_setting_value('automatic_window_opening_status_by_co2'),
+        'on_co2_level'  : db.get_setting_value('automatic_window_opening_open_on_co2_level'),
+        'status_temp'   : db.get_setting_value('automatic_window_opening_status_by_temp'),
+        'on_temp_level' : db.get_setting_value('automatic_window_opening_open_on_temp_level')
     }
     try:
-        automatic_window_opening_data['on_co2_level'] = int(automatic_window_opening_data['on_co2_level'])
+        automatic_window_opening_data['status_co2']    = int(automatic_window_opening_data['status_co2'])
+        automatic_window_opening_data['on_co2_level']  = int(automatic_window_opening_data['on_co2_level'])
+        automatic_window_opening_data['status_temp']   = int(automatic_window_opening_data['status_temp'])
+        automatic_window_opening_data['on_temp_level'] = int(automatic_window_opening_data['on_temp_level'])
     except:
         pass
     print('automatic_window_opening_data', automatic_window_opening_data)
-    return render_template('settings.html', co2levels=co2levels, automatic_window_opening_data=automatic_window_opening_data)
+    return render_template('settings.html', co2levels=co2levels, templevels=templevels, automatic_window_opening_data=automatic_window_opening_data)
 
 @app.route('/settings/set/co2levels', methods=['POST'])
 def settings_set_co2levels():
-    print(request.form)
+    print('settings_set_co2levels', request.form)
     for co2_level, value in request.form.items():
         db.set_co2_level_value(co2_level, value)
     return redirect(url_for('settings'))
 
-@app.route('/settings/set/automatic_window_opening', methods=['POST'])
-def settings_set_automatic_window_opening():
-    automatic_window_opening_status            = request.form.get('automatic_window_opening_status') == 'on'
-    automatic_window_opening_open_on_co2_level = request.form.get('automatic_window_opening_open_on_co2_level')
+@app.route('/settings/set/templevels', methods=['POST'])
+def settings_set_templevels():
+    print('settings_set_templevels', request.form)
+    for templevel, value in request.form.items():
+        db.set_temperature_level_value(templevel, value)
+    return redirect(url_for('settings'))
+
+@app.route('/settings/set/automatic_window_opening/<type>', methods=['POST'])
+def settings_set_automatic_window_opening(type):
+    print('settings_set_automatic_window_opening', request.form)
+    automatic_window_opening_status  = request.form.get(f'automatic_window_opening_status_by_{type}') == 'on'
+    automatic_window_opening_open_on = request.form.get(f'automatic_window_opening_open_on_{type}_level')
     
-    db.set_setting_value('automatic_window_opening_status', automatic_window_opening_status)
-    db.set_setting_value('automatic_window_opening_open_on_co2_level', automatic_window_opening_open_on_co2_level)
+    db.set_setting_value(f'automatic_window_opening_status_by_{type}', automatic_window_opening_status)
+    db.set_setting_value(f'automatic_window_opening_open_on_{type}_level', automatic_window_opening_open_on)
     
     return redirect(url_for('settings'))
 
@@ -84,7 +112,7 @@ def device(device_id):
     device = db.get_device_by_id(device_id).to_dict()
     
     automatic_window_opening_data = {
-        'status'       : db.get_setting_value('automatic_window_opening_status'),
+        'status'       : db.get_setting_value('automatic_window_opening_status_co2'),
         'on_co2_level' : db.get_setting_value('automatic_window_opening_open_on_co2_level')
     }
     
@@ -128,6 +156,12 @@ def co2levels_get():
     co2_levels = db.get_co2_levels()
     print(co2_levels)
     return jsonify([co2_level.to_dict() for co2_level in co2_levels])
+
+@app.route('/api/templevels/get')
+def templevels_get():
+    temperature_levels = db.get_temperature_levels()
+    print(temperature_levels)
+    return jsonify([temperature_levels.to_dict() for temperature_level in temperature_levels])
 
 @app.route('/api/history/window_opening/<type>/<device_id>')
 def history_window_opening(type, device_id):

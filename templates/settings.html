@@ -19,18 +19,23 @@
         </div>
     </header>
     
+    {% for settings_section in ["co2", "temp"] %}
+    {% set status_key = "status_" + settings_section %}
+    {% set levels = co2levels if settings_section == "co2" else templevels %}
+    {% set level_key = "on_" + settings_section + "_level" %}
     <div class="settings_wrapper">
-        <div>
-            <form action="{{ url_for('settings_set_co2levels')}}" method="post">
+    <div>
+            <form action="/settings/set/{{ settings_section }}levels" method="post">
                 <table>
                     <tr>
-                        <th colspan="2">CO2 Level starting value</th>
+                        <th colspan="2">{{ settings_section.upper() }} Level starting value</th>
                     </tr>
+                    
 
-                    {% for co2level in co2levels %}
+                    {% for level in levels %}
                         <tr>
-                            <th class="right_text" style="color: {{ co2level['color'] }}">{{ co2level['name'] }}</th>
-                            <td><input type="number" id="co2_{{ co2level['id_co2_level'] }}" name="{{ co2level['id_co2_level'] }}" value="{{ co2level['from_value'] }}" required></td>
+                            <th class="right_text" style="color: {{ level['color'] }}">{{ level['name'] }}</th>
+                            <td><input type="number" id="{{ settings_section }}_{{ level['id_warning_level'] }}" name="{{ level['id_warning_level'] }}" value="{{ level['from_value'] }}" required></td>
                         </tr>
                     {% endfor %}
 
@@ -44,27 +49,29 @@
         </div>
 
         <div>
-            <form action="{{ url_for('settings_set_automatic_window_opening')}}" method="post">
+            <form action="/settings/set/automatic_window_opening/{{ settings_section }}" method="post">
                 <table>
                     <tr>
-                        <th colspan="2">Automatic window opening</th>
+                        <th colspan="2">Automatic window opening by {{ settings_section.upper() }}</th>
                     </tr>
                     <tr>
                         <th class="right_text">Enable</th>
-                        <td><input type="checkbox" id="automatic_window_opening_status" name="automatic_window_opening_status" {{ "checked" if automatic_window_opening_data.status else "" }}></td>
+                        <td>
+                            <input type="checkbox" id="automatic_window_opening_status_by_{{ settings_section }}" 
+                                name="automatic_window_opening_status_by_{{ settings_section }}" 
+                                {{ "checked" if automatic_window_opening_data[status_key] == 1 else "" }}>
+                        </td>
                     </tr>
                     <tr>
                         <th class="right_text">Open on</th>
                         <td>
-                            <select id="automatic_window_opening_open_on_co2_level" name="automatic_window_opening_open_on_co2_level">
-                                {% for co2level in co2levels %}
-                                    <script>
-                                        console.log("automatic_window_opening_data.status: {{ automatic_window_opening_data.status}}");
-                                        console.log("automatic_window_opening_data.on_co2_level: {{ automatic_window_opening_data.on_co2_level}}");
-                                        console.log("co2level['id_co2_level']: {{ co2level["id_co2_level"] }}");
-                                        console.log("automatic_window_opening_data.on_co2_level == co2level['id_co2_level']: {{ automatic_window_opening_data.on_co2_level == co2level["id_co2_level"] }}");
-                                    </script>
-                                    <option value="{{ co2level['id_co2_level'] }}" {{ "selected" if automatic_window_opening_data.on_co2_level == co2level["id_co2_level"] else "" }}>{{ co2level['name'] }}</option>
+                            <select id="automatic_window_opening_open_on_{{ settings_section }}_level" 
+                                    name="automatic_window_opening_open_on_{{ settings_section }}_level">
+                                {% for level in levels %}
+                                    <option value="{{ level['id_warning_level'] }}" 
+                                        {{ "selected" if automatic_window_opening_data[level_key] == level['id_warning_level'] else "" }}>
+                                        {{ level['name'] }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </td>
@@ -77,6 +84,9 @@
                 </table>
             </form>
         </div>
+
     </div>
+    {% endfor %}
+
 </body>
 </html>

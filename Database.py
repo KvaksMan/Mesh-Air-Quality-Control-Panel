@@ -290,7 +290,7 @@ class Database:
                     value = setting_value
                 )
                 session.add(new_setting)
-                self.logger.info(f"Setting {setting_name} saved to the database (setting_value).")
+                self.logger.info(f"Setting {setting_name} saved to the database ({setting_value}).")
             else:
                 if setting.value != setting_value:
                     setting.value = setting_value
@@ -308,6 +308,18 @@ class Database:
                 co2_level.from_value = co2_level_value
                 co2_level.last_updated = datetime.utcnow()
                 self.logger.info(f"CO2 Level {co2_level_id} updated in the database (from {co2_level.from_value} to {co2_level_value}).")
+            session.commit()
+    
+    def set_temperature_level_value(self, temp_level_id : int, temp_level_value : int) -> None:
+        with self.get_session() as session:
+            temp_level : WarningLevel = session.query(WarningLevel).filter(WarningLevel.id_warning_level == temp_level_id).first()
+            if temp_level is None:
+                self.logger.error(f"Temperature Level {temp_level_id} not found in the database.")
+                return
+            if temp_level.from_value != temp_level_value:
+                temp_level.from_value = temp_level_value
+                temp_level.last_updated = datetime.utcnow()
+                self.logger.info(f"Temperature Level {temp_level_id} updated in the database (from {temp_level.from_value} to {temp_level_value}).")
             session.commit()
     
     def get_all_devices(self) -> list[Device]:
@@ -337,6 +349,10 @@ class Database:
     def get_co2_levels(self) -> list[WarningLevel]:
         with self.get_session() as session:
             return session.query(WarningLevel).filter(WarningLevel.type == 'CO2').all()
+    
+    def get_temperature_levels(self) -> list[WarningLevel]:
+        with self.get_session() as session:
+            return session.query(WarningLevel).filter(WarningLevel.type == 'temp').all()
     
     def get_warning_level_by_id(self, id_co2_level : int) -> WarningLevel:
         with self.get_session() as session:
