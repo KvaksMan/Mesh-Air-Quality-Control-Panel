@@ -19,7 +19,7 @@ import threading
 from time import sleep
 def window_automation() -> None:
     while True:
-        sleep(5)
+        sleep(DELAY_WINDOW_AUTOMATION)
         automatic_window_opening_data = {
             'status_co2'    : int(db.get_setting_value('automatic_window_opening_status_by_co2')),
             'on_co2_level'  : int(db.get_setting_value('automatic_window_opening_open_on_co2_level')),
