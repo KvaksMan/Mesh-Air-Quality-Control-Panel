@@ -271,6 +271,7 @@ class Database:
         )
         session.add(new_record)
         session.commit()
+        self.logger.info(f"Window opening record for device {device_id} saved to the database.")
     
     def add_window_opening_record_close(self, session : Session, device_id : int) -> None:
         existing_record : object = session.query(WindowOpeningHistory).filter(
@@ -280,6 +281,9 @@ class Database:
             existing_record.timestamp_close = datetime.utcnow()
             existing_record.last_updated = datetime.utcnow()
             session.commit()
+            self.logger.info(f"Window closing record for device {device_id} saved to the database.")
+        else:
+            self.logger.error(f"Window closing record for device {device_id} not found in the database.")
     
     def set_setting_value(self, setting_name : str, setting_value : str) -> None:
         with self.get_session() as session:
@@ -375,23 +379,30 @@ class Database:
         with self.get_session() as session:
             setting : Settings = session.query(Settings).filter(Settings.name == setting_name).first()
             return setting.value if setting else None
-    
-    def get_devices_with_window_state(self) -> list[tuple[Device, bool]]:
+        
+    def get_devices_with_window_state(self) -> list[dict]:
         with self.get_session() as session:
-            subquery = (
-                session.query(
-                    WindowOpeningHistory.id_device,
-                    func.max(WindowOpeningHistory.id_window_opening_history).label("latest_id")
-                )
-                .group_by(WindowOpeningHistory.id_device)
-                .subquery()
-            )
+            query = session.query(
+                Device.id_device,
+                Device.id_room_group,
+                Device.id_room_group_name,
+                Device.temperature,
+                Device.humidity,
+                Device.co2,
+                Device.id_building,
+                Device.online,
+                Device.timestamp,
+                Device.last_updated,
+                WindowOpeningHistory.timestamp_open,
+                WindowOpeningHistory.timestamp_close,
+                (WindowOpeningHistory.timestamp_close == None).label('window_open')
+            ).outerjoin(WindowOpeningHistory, Device.id_device == WindowOpeningHistory.id_device)
 
-            devices = (
-                session.query(Device, WindowOpeningHistory.timestamp_close)
-                .outerjoin(subquery, Device.id_device == subquery.c.id_device)
-                .outerjoin(WindowOpeningHistory, WindowOpeningHistory.id_window_opening_history == subquery.c.latest_id)
-                .all()
-            )
+            result = []
+            for row in query.all():
+                device_data = row._asdict()
+                if device_data['timestamp_open'] is None and device_data['timestamp_close'] is None:
+                    device_data['window_open'] = False
+                result.append(device_data)
 
-            return [(device, timestamp_close is None if timestamp_close is not None else False) for device, timestamp_close in devices]
+            return result

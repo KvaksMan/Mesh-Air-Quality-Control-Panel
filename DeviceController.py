@@ -53,6 +53,11 @@ class DeviceWindowOpener(Device):
             
         super().__init__(id, id_room_group, name, DeviceType.WINDOW_OPENER, None, db)
         self._state = state
+        if self._db is not None:
+            with self._db.get_session() as session:
+                record = self._db.get_window_opening_last_record(self._id)
+                if record is not None:
+                    self._state = record.timestamp_close is None
     
     def convert_to_general(self):
         return Device(self._id, self._id_room_group, self._name, self._type, {"state": self._state})
