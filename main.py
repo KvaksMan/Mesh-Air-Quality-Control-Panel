@@ -1,6 +1,6 @@
-__DELAY_WINDOW_AUTOMATION : int = 5 * 60
+from Constants import DELAY_WINDOW_AUTOMATION
 
-from Database import Database, Device, Record, CO2Level
+from Database import Database, Device, Record, WarningLevel
 db : Database = Database()
 
 # with db.get_session() as session:
@@ -19,7 +19,7 @@ import threading
 from time import sleep
 def window_automation() -> None:
     while True:
-        sleep(__DELAY_WINDOW_AUTOMATION)
+        sleep(DELAY_WINDOW_AUTOMATION)
         automatic_window_opening_data = {
             'status'       : db.get_setting_value('automatic_window_opening_status'),
             'on_co2_level' : db.get_setting_value('automatic_window_opening_open_on_co2_level')
@@ -27,7 +27,7 @@ def window_automation() -> None:
         if not automatic_window_opening_data['status']:
             continue
         devices  : list[Device] = db.get_all_devices()
-        co2level : CO2Level     = db.get_co2_level_by_id(automatic_window_opening_data['on_co2_level'])
+        co2level : WarningLevel     = db.get_warning_level_by_id(automatic_window_opening_data['on_co2_level'])
         
         for device in devices:
             dwo : DeviceController.Device = DeviceController.DeviceWindowOpener(
@@ -126,6 +126,7 @@ def devices(device_id):
 @app.route('/api/co2levels/get')
 def co2levels_get():
     co2_levels = db.get_co2_levels()
+    print(co2_levels)
     return jsonify([co2_level.to_dict() for co2_level in co2_levels])
 
 @app.route('/api/history/window_opening/<type>/<device_id>')

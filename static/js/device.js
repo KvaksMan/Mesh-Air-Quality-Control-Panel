@@ -22,6 +22,8 @@ function update_chart(id_device, fake_automatic_window_opening = 0) {
             fetch('/api/co2levels/get')
                 .then(response => response.json())
                 .then(data_co2 => {
+                    console.log(data_co2);
+                    
                     clearInterval(refreshIntervalId);
                     chart_update_status.style.display = 'none';
                     section_chart      .style.display = 'block';

@@ -1,4 +1,4 @@
-__DELAY_DATABASE_UPDATE : int = 300
+from Constants import DELAY_DATABASE_UPDATE
 
 import logging
 import os
@@ -63,20 +63,22 @@ class Record(Base):
             "last_updated" : self.last_updated.isoformat() if self.last_updated else None
         }
 
-class CO2Level(Base):
-    __tablename__ : str = 'CO2Levels'
+class WarningLevel(Base):
+    __tablename__ : str = 'WarningLevels'
     
-    id_co2_level  : int = Column(Integer, primary_key=True)
-    name          : str = Column(String)
-    from_value    : int = Column(Integer)
-    color         : str = Column(String)
+    id_warning_level : int = Column(Integer, primary_key=True)
+    type             : str = Column(String)
+    name             : str = Column(String)
+    from_value       : int = Column(Integer)
+    color            : str = Column(String)
     
     def to_dict(self):
         return {
-            "id_co2_level" : self.id_co2_level,
-            "name"         : self.name,
-            "from_value"   : self.from_value,
-            "color"        : self.color
+            "id_warning_level" : self.id_warning_level,
+            "type"             : self.type,
+            "name"             : self.name,
+            "from_value"       : self.from_value,
+            "color"            : self.color
         }
 
 class WindowOpeningHistory(Base):
@@ -179,13 +181,14 @@ class Database:
 
     def save_co2_levels(self, session : Session, co2_levels : list[dict]) -> None:
         for co2_level in co2_levels:
-            existing_co2_level : object = session.query(CO2Level).filter(CO2Level.id_co2_level == co2_level['id']).first()
+            existing_co2_level : object = session.query(WarningLevel).filter(WarningLevel.id_warning_level == co2_level['id']).first()
             if existing_co2_level is None:
-                new_co2_level : CO2Level = CO2Level(
-                    id_co2_level = co2_level['id'],
-                    name         = co2_level['name'],
-                    from_value   = co2_level['from_value'],
-                    color        = co2_level['color']
+                new_co2_level : WarningLevel = WarningLevel(
+                    id_warning_level = co2_level['id'],
+                    type             = 'CO2',
+                    name             = co2_level['name'],
+                    from_value       = co2_level['from_value'],
+                    color            = co2_level['color']
                 )
                 session.add(new_co2_level)
                 self.logger.debug(f"CO2 Level {co2_level['id']} saved to the database.")
@@ -297,7 +300,7 @@ class Database:
     
     def set_co2_level_value(self, co2_level_id : int, co2_level_value : int) -> None:
         with self.get_session() as session:
-            co2_level : CO2Level = session.query(CO2Level).filter(CO2Level.id_co2_level == co2_level_id).first()
+            co2_level : WarningLevel = session.query(WarningLevel).filter(WarningLevel.id_warning_level == co2_level_id).first()
             if co2_level is None:
                 self.logger.error(f"CO2 Level {co2_level_id} not found in the database.")
                 return
@@ -308,10 +311,9 @@ class Database:
             session.commit()
     
     def get_all_devices(self) -> list[Device]:
-        global __DELAY_DATABASE_UPDATE
         with self.get_session() as session:
             lastUpdate = session.query(Device).first().last_updated
-            if (datetime.utcnow() - lastUpdate).total_seconds() > __DELAY_DATABASE_UPDATE:
+            if (datetime.utcnow() - lastUpdate).total_seconds() > DELAY_DATABASE_UPDATE:
                 self.fetch_devices()
             return session.query(Device).all()
     
@@ -325,21 +327,20 @@ class Database:
             return device
 
     def get_records_by_device(self, device_id : int) -> Record:
-        global __DELAY_DATABASE_UPDATE
         with self.get_session() as session:
             records : list = session.query(Record).filter(Record.id_device == device_id).order_by(Record.timestamp).all()            
-            if len(records) == 0 or (datetime.utcnow() - records[-1].last_updated).total_seconds() > __DELAY_DATABASE_UPDATE:
+            if len(records) == 0 or (datetime.utcnow() - records[-1].last_updated).total_seconds() > DELAY_DATABASE_UPDATE:
                 self.fetch_device_data(device_id)
                 records = session.query(Record).filter(Record.id_device == device_id).order_by(Record.timestamp).all()       
             return records
     
-    def get_co2_levels(self) -> list[CO2Level]:
+    def get_co2_levels(self) -> list[WarningLevel]:
         with self.get_session() as session:
-            return session.query(CO2Level).all()
+            return session.query(WarningLevel).filter(WarningLevel.type == 'CO2').all()
     
-    def get_co2_level_by_id(self, id_co2_level : int) -> CO2Level:
+    def get_warning_level_by_id(self, id_co2_level : int) -> WarningLevel:
         with self.get_session() as session:
-            return session.query(CO2Level).filter(CO2Level.id_co2_level == id_co2_level).first()
+            return session.query(WarningLevel).filter(WarningLevel.id_warning_level == id_co2_level).first()
     
     def get_window_opening_history(self, device_id : int) -> list[WindowOpeningHistory]:
         with self.get_session() as session:
