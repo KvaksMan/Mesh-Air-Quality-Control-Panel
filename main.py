@@ -19,15 +19,17 @@ import threading
 from time import sleep
 def window_automation() -> None:
     while True:
-        sleep(DELAY_WINDOW_AUTOMATION)
+        sleep(5)
         automatic_window_opening_data = {
-            'status_co2'    : db.get_setting_value('automatic_window_opening_status_by_co2'),
-            'on_co2_level'  : db.get_setting_value('automatic_window_opening_open_on_co2_level'),
-            'status_temp'   : db.get_setting_value('automatic_window_opening_status_by_temp'),
-            'on_temp_level' : db.get_setting_value('automatic_window_opening_open_on_temp_level')
+            'status_co2'    : int(db.get_setting_value('automatic_window_opening_status_by_co2')),
+            'on_co2_level'  : int(db.get_setting_value('automatic_window_opening_open_on_co2_level')),
+            'status_temp'   : int(db.get_setting_value('automatic_window_opening_status_by_temp')),
+            'on_temp_level' : int(db.get_setting_value('automatic_window_opening_open_on_temp_level'))
         }
-        if not (automatic_window_opening_data['status_co2'] or automatic_window_opening_data['status_temp']):
+        print('automatic_window_opening_data', automatic_window_opening_data)
+        if not automatic_window_opening_data['status_co2'] and not automatic_window_opening_data['status_temp']:
             continue
+        print('flag')
         
         devices   : list[Device] = db.get_all_devices()
         co2level  : WarningLevel = db.get_warning_level_by_id(automatic_window_opening_data['on_co2_level'])
@@ -138,10 +140,7 @@ def devices(device_id):
     if device_id == 'get':
         db.fetch_devices()
         devices_with_state = db.get_devices_with_window_state()
-        return jsonify([
-            {**device.to_dict(), "window_open": window_open} 
-            for device, window_open in devices_with_state
-        ])
+        return jsonify(devices_with_state)
 
     try:
         device_id = int(device_id)
