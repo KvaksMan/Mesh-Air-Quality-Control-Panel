@@ -3,7 +3,7 @@ from Constants import DELAY_DATABASE_UPDATE
 import logging
 import os
 import requests
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, joinedload
 from sqlalchemy.sql import func
@@ -117,12 +117,33 @@ class Settings(Base):
             "last_updated" : self.last_updated.isoformat() if self.last_updated else None,
         }
 
+
+
 class Database:
     def __init__(self, db_url="sqlite:///mesh_air_quality.db") -> None:
         self.engine : object = create_engine(db_url)
         Base.metadata.create_all(self.engine)
         self.SessionLocal : sessionmaker = sessionmaker(bind=self.engine)
         self._setup_logger()
+        self.initialize_database(self.engine)
+    
+    def initialize_database(self, engine):
+        with Session(engine) as session:
+            if not session.query(Settings).first():
+                session.add_all([
+                    Settings(id_setting=0, name='automatic_window_opening_status', value='1'),
+                    Settings(id_setting=1, name='automatic_window_opening_open_on_co2_level', value='1'),
+                    Settings(id_setting=2, name='automatic_window_opening_status_by_co2', value='1'),
+                    Settings(id_setting=3, name='automatic_window_opening_status_by_temp', value='0'),
+                    Settings(id_setting=4, name='automatic_window_opening_open_on_temp_level', value='5'),
+                    WarningLevel(id_warning_level=0, type='CO2', name='Good', from_value=0, color='green'),
+                    WarningLevel(id_warning_level=1, type='CO2', name='Moderate', from_value=1000, color='orange'),
+                    WarningLevel(id_warning_level=2, type='CO2', name='Unhealthy', from_value=2000, color='red'),
+                    WarningLevel(id_warning_level=3, type='temp', name='Good', from_value=0, color='green'),
+                    WarningLevel(id_warning_level=4, type='temp', name='Moderate', from_value=20, color='orange'),
+                    WarningLevel(id_warning_level=5, type='temp', name='Unhealthy', from_value=25, color='red')
+                ])
+                session.commit()
 
     def _setup_logger(self) -> None:
         log_dir : str = 'logs'
