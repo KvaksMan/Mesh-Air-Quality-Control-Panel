@@ -364,7 +364,7 @@ class Database:
     
     def get_window_opening_history(self, device_id : int) -> list[WindowOpeningHistory]:
         with self.get_session() as session:
-            return session.query(WindowOpeningHistory).filter(Record.id_device == device_id).all()
+            return session.query(WindowOpeningHistory).filter(WindowOpeningHistory.id_device == device_id).all()
     
     def get_window_opening_last_record(self, device_id : int) -> WindowOpeningHistory:
         with self.get_session() as session:
