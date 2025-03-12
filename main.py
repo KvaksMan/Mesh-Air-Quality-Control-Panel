@@ -160,7 +160,7 @@ def co2levels_get():
 def templevels_get():
     temperature_levels = db.get_temperature_levels()
     print(temperature_levels)
-    return jsonify([temperature_levels.to_dict() for temperature_level in temperature_levels])
+    return jsonify([temperature_level.to_dict() for temperature_level in temperature_levels])
 
 @app.route('/api/history/window_opening/<type>/<device_id>')
 def history_window_opening(type, device_id):
