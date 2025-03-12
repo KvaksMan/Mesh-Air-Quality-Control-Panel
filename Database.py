@@ -9,7 +9,6 @@ from sqlalchemy.orm import sessionmaker, Session, joinedload
 from sqlalchemy.sql import func
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
-# from json import JSONEncoder
 
 Base : declarative_base = declarative_base()
 

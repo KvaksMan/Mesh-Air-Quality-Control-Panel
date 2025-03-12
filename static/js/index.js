@@ -1,25 +1,3 @@
-{/* <tr>
-    <th>Device ID</th>
-    <th>Location</th>
-    <th>Status</th>
-    <th>Temperature</th>
-    <th>Humidity</th>
-    <th>CO2</th>
-    <th>Last updated</th>
-</tr> */}
-
-// {
-//     "id_device"          : self.id_device,
-//     "id_room_group"      : self.id_room_group,
-//     "id_room_group_name" : self.id_room_group_name,
-//     "temperature"        : self.temperature,
-//     "humidity"           : self.humidity,
-//     "co2"                : self.co2,
-//     "id_building"        : self.id_building,
-//     "online"             : self.online,
-//     "timestamp"          : self.timestamp.isoformat() if self.timestamp else None,
-//     "last_updated"       : self.last_updated.isoformat() if self.last_updated else None,
-// }
 function get_devices() {
     fetch('/api/devices/get')
         .then(response => response.json())
@@ -53,7 +31,6 @@ function get_devices() {
                                 cell_window.innerHTML       = element.window_open ? "Opened" : "Closed";
                 
                                 cell_status.style.color = element.online      ? "green" : "red";
-                                // cell_window.style.color = element.window_open ? "green" : "red";
 
                                 data_co2.forEach(element_co2 => {
                                     if (element_co2.from_value < element.co2) {

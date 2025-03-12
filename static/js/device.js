@@ -2,8 +2,6 @@ function update_chart(id_device, fake_automatic_window_opening = 0) {
     const chart_update_status = document.getElementById("chart_update_status");
     const section_chart       = document.getElementById('section_chart');
 
-    console.log(chart_update_status);
-
     chart_update_status.style.display = 'block';
     section_chart      .style.display = 'none';
 
@@ -17,13 +15,9 @@ function update_chart(id_device, fake_automatic_window_opening = 0) {
     fetch(`/api/devices/${id_device}`)
         .then(response => response.json())
         .then(data => {
-            console.log(data);
-
             fetch('/api/co2levels/get')
                 .then(response => response.json())
                 .then(data_co2 => {
-                    console.log(data_co2);
-                    
                     clearInterval(refreshIntervalId);
                     chart_update_status.style.display = 'none';
                     section_chart      .style.display = 'block';
@@ -34,7 +28,6 @@ function update_chart(id_device, fake_automatic_window_opening = 0) {
 
                     const margin = { top: 20, right: 40, bottom: 40, left: 30 };
                     const width = section_chart.offsetWidth - margin.left - margin.right;
-                    // const width = 1000 - margin.left - margin.right;
                     const height = 500 - margin.top - margin.bottom;
 
                     const svg = d3.select("#chart_container").append("svg")
@@ -219,25 +212,17 @@ function update_window_opening_history(device_id) {
                 let cell_opened_at = row.insertCell(0);
                 let cell_closed_at = row.insertCell(1);
                 let cell_duration  = row.insertCell(2);
-
-                console.log("element", element);
                 
                 let duration = "";
                 if (element.open_duration) {
                     let seconds = element.open_duration % 60;
                     element.open_duration = Math.floor(element.open_duration / 60);
-                    // console.log("element.open_duration", element.open_duration);
                     duration = `${seconds.toFixed(2)} sec`;
                     if (element.open_duration != 0) {
                         let minutes = element.open_duration;
-                        // element.open_duration = Math.floor(element.open_duration / 60); // hours
-                        // console.log("element.open_duration", element.open_duration);
                         duration = `${minutes} min ${duration}`;
                     }
                 }
-
-                console.log(`element.timestamp_close | ""`, element.timestamp_close);
-                
 
                 cell_opened_at.innerHTML = element.timestamp_open;
                 cell_closed_at.innerHTML = element.timestamp_close || "";

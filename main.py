@@ -3,16 +3,6 @@ from Constants import DELAY_WINDOW_AUTOMATION
 from Database import Database, Device, Record, WarningLevel
 db : Database = Database()
 
-# with db.get_session() as session:
-#     db.save_co2_levels(
-#         session,
-#         [
-#             { 'id' : 0, 'name' : 'Good', 'from_value' : 0, 'color' : 'green' },
-#             { 'id' : 1, 'name' : 'Moderate', 'from_value' : 1000, 'color' : 'orange' },
-#             { 'id' : 2, 'name' : 'Unhealthy', 'from_value' : 2000, 'color' : 'red' }
-#         ]
-#     )
-
 import DeviceController
 
 import threading
@@ -26,10 +16,9 @@ def window_automation() -> None:
             'status_temp'   : int(db.get_setting_value('automatic_window_opening_status_by_temp')),
             'on_temp_level' : int(db.get_setting_value('automatic_window_opening_open_on_temp_level'))
         }
-        print('automatic_window_opening_data', automatic_window_opening_data)
+
         if not automatic_window_opening_data['status_co2'] and not automatic_window_opening_data['status_temp']:
             continue
-        print('flag')
         
         devices   : list[Device] = db.get_all_devices()
         co2level  : WarningLevel = db.get_warning_level_by_id(automatic_window_opening_data['on_co2_level'])
@@ -56,7 +45,6 @@ thread_window_automation.start()
 from flask import Flask, render_template, jsonify, request, redirect, url_for
 
 app = Flask(__name__)
-# app.json_encoder = CustomJSONEncoder
 
 @app.route('/')
 def index():
@@ -66,8 +54,7 @@ def index():
 def settings():
     co2levels  = [co2_level.to_dict() for co2_level in db.get_co2_levels()]
     templevels = [templevel.to_dict() for templevel in db.get_temperature_levels()]
-    print('co2levels', co2levels)
-    #                                            co2levels = [co2_level.to_dict() for co2_level in db.get_co2_levels()]
+    
     automatic_window_opening_data = {
         'status_co2'    : db.get_setting_value('automatic_window_opening_status_by_co2'),
         'on_co2_level'  : db.get_setting_value('automatic_window_opening_open_on_co2_level'),
@@ -81,26 +68,22 @@ def settings():
         automatic_window_opening_data['on_temp_level'] = int(automatic_window_opening_data['on_temp_level'])
     except:
         pass
-    print('automatic_window_opening_data', automatic_window_opening_data)
     return render_template('settings.html', co2levels=co2levels, templevels=templevels, automatic_window_opening_data=automatic_window_opening_data)
 
 @app.route('/settings/set/co2levels', methods=['POST'])
 def settings_set_co2levels():
-    print('settings_set_co2levels', request.form)
     for co2_level, value in request.form.items():
         db.set_co2_level_value(co2_level, value)
     return redirect(url_for('settings'))
 
 @app.route('/settings/set/templevels', methods=['POST'])
 def settings_set_templevels():
-    print('settings_set_templevels', request.form)
     for templevel, value in request.form.items():
         db.set_temperature_level_value(templevel, value)
     return redirect(url_for('settings'))
 
 @app.route('/settings/set/automatic_window_opening/<type>', methods=['POST'])
 def settings_set_automatic_window_opening(type):
-    print('settings_set_automatic_window_opening', request.form)
     automatic_window_opening_status  = request.form.get(f'automatic_window_opening_status_by_{type}') == 'on'
     automatic_window_opening_open_on = request.form.get(f'automatic_window_opening_open_on_{type}_level')
     
@@ -120,21 +103,6 @@ def device(device_id):
     
     return render_template('device.html', device=device, automatic_window_opening_data=automatic_window_opening_data)
 
-# @app.route('/api/devices/<device_id>')
-# def devices(device_id):
-#     if device_id == 'get':
-#         db.fetch_devices()
-#         devices = db.get_all_devices()
-#         return jsonify([device.to_dict() for device in devices])
-
-#     try:
-#         device_id = int(device_id)
-#     except:
-#         return "Device ID must be an integer.", 400
-    
-#     records = db.get_records_by_device(device_id)
-#     return jsonify([record.to_dict() for record in records])
-
 @app.route('/api/devices/<device_id>', methods=['GET'])
 def devices(device_id):
     if device_id == 'get':
@@ -153,13 +121,11 @@ def devices(device_id):
 @app.route('/api/co2levels/get')
 def co2levels_get():
     co2_levels = db.get_co2_levels()
-    print(co2_levels)
     return jsonify([co2_level.to_dict() for co2_level in co2_levels])
 
 @app.route('/api/templevels/get')
 def templevels_get():
     temperature_levels = db.get_temperature_levels()
-    print(temperature_levels)
     return jsonify([temperature_level.to_dict() for temperature_level in temperature_levels])
 
 @app.route('/api/history/window_opening/<type>/<device_id>')
