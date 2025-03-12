@@ -1,0 +1,7 @@
+flask
+sqlalchemy
+pymysql
+requests
+pyserial
+flask-socketio
+python-dotenv
